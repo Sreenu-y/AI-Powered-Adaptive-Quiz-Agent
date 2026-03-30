@@ -103,7 +103,7 @@ Ensure the following variables are set in your `.env.local`:
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | Clerk Frontend API Key             |
 | `CLERK_SECRET_KEY`                  | Clerk Backend API Key              |
 | `GEMINI_API_KEYS`                   | Comma-separated Gemini AI API Keys |
-| `QWEN_API_KEY`                      | QWEN AI API Keys                   |
+| `QWEN_API_KEY`                      | QWEN AI API Key                   |
 
 ---
 
