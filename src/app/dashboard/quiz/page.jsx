@@ -1,13 +1,10 @@
 "use client";
 
-import React, { useState, useCallback, useEffect } from "react";
+import React, { Suspense, useState, useCallback, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { useDropzone } from "react-dropzone";
-import {
-  saveQuizAttempt,
-  finalFeedbackAction,
-} from "@/actions/quiz";
+import { saveQuizAttempt, finalFeedbackAction } from "@/actions/quiz";
 import {
   Card,
   CardContent,
@@ -100,7 +97,8 @@ function ConfigPhase({ onStart, userId }) {
     onDrop,
     accept: {
       "application/pdf": [".pdf"],
-      "application/vnd.openxmlformats-officedocument.wordprocessingml.document": [".docx"],
+      "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
+        [".docx"],
       "image/jpeg": [".jpg", ".jpeg"],
       "image/png": [".png"],
       "image/webp": [".webp"],
@@ -170,11 +168,15 @@ function ConfigPhase({ onStart, userId }) {
         return;
       }
       if (/^[^a-zA-Z]*$/.test(t)) {
-        setError("Please enter a meaningful topic (e.g., React, Climate Change, Data Structures)");
+        setError(
+          "Please enter a meaningful topic (e.g., React, Climate Change, Data Structures)",
+        );
         return;
       }
       if (/^(.)\1+$/.test(t.replace(/\s/g, ""))) {
-        setError("Please enter a meaningful topic (e.g., React, Climate Change, Data Structures)");
+        setError(
+          "Please enter a meaningful topic (e.g., React, Climate Change, Data Structures)",
+        );
         return;
       }
 
@@ -209,7 +211,7 @@ function ConfigPhase({ onStart, userId }) {
 
     const rawCount = showCustomInput ? customCount : numQuestions;
     const effectiveCount = parseInt(String(rawCount || "10").trim());
-    
+
     const formData = new FormData();
     formData.append("inputType", inputType);
     formData.append("numQuestions", String(effectiveCount));
@@ -259,18 +261,18 @@ function ConfigPhase({ onStart, userId }) {
       clearInterval(progressInterval);
       setProgressValue(100);
 
-        onStart({
-          quizId: data.quizId,
-          questions: data.questions,
-          topic: data.topic || topic || fileName || url || "General",
-          subtopic: data.subtopic || subtopic.trim() || "",
-          inputType,
-          requestedCount: data.requestedCount || effectiveCount,
-          previousTopicLevel:
-            data.previousTopicLevel || topicLevelInfo?.topicLevel || null,
-          isNewTopic: data.isNewTopic ?? topicLevelInfo?.isNew ?? true,
-          selectedDifficulty: data.selectedDifficulty || difficulty || null,
-        });
+      onStart({
+        quizId: data.quizId,
+        questions: data.questions,
+        topic: data.topic || topic || fileName || url || "General",
+        subtopic: data.subtopic || subtopic.trim() || "",
+        inputType,
+        requestedCount: data.requestedCount || effectiveCount,
+        previousTopicLevel:
+          data.previousTopicLevel || topicLevelInfo?.topicLevel || null,
+        isNewTopic: data.isNewTopic ?? topicLevelInfo?.isNew ?? true,
+        selectedDifficulty: data.selectedDifficulty || difficulty || null,
+      });
     } catch (err) {
       setError(err.message);
     } finally {
@@ -428,7 +430,8 @@ function ConfigPhase({ onStart, userId }) {
                   />
                 </div>
                 <p className="text-xs text-muted-foreground pl-1">
-                  Paste a YouTube video, a GeeksforGeeks article, or any webpage link
+                  Paste a YouTube video, a GeeksforGeeks article, or any webpage
+                  link
                 </p>
               </div>
             </TabsContent>
@@ -475,9 +478,10 @@ function ConfigPhase({ onStart, userId }) {
         </CardHeader>
         <CardContent className="space-y-5">
           {/* Difficulty selector — only for new topics */}
-          {inputType === "topic" && (showDifficultySelector || !topicLevelInfo) && (
-            <div>
-              <label className="text-sm font-medium mb-2.5 block text-foreground/80">
+          {inputType === "topic" &&
+            (showDifficultySelector || !topicLevelInfo) && (
+              <div>
+                <label className="text-sm font-medium mb-2.5 block text-foreground/80">
                   Difficulty
                 </label>
                 <div className="flex gap-2 flex-wrap">
@@ -500,98 +504,106 @@ function ConfigPhase({ onStart, userId }) {
               </div>
             )}
 
-            <div>
-              <label className="text-sm font-medium mb-2.5 block text-foreground/80">
-                Quiz Type
-              </label>
-              <div className="flex gap-2 flex-wrap">
-                {[
-                  { value: "mixed", label: "Mixed AI Pick" },
-                  { value: "mcq", label: "Multiple Choice" },
-                  { value: "true-false", label: "True / False" },
-                  { value: "fill-blank", label: "Fill in the Blanks" }
-                ].map((qt) => (
-                  <button
-                    key={qt.value}
-                    onClick={() => setQuizType(qt.value)}
-                    className={`px-5 py-2.5 rounded-xl text-sm font-medium border transition-all duration-200 ${
-                      quizType === qt.value
-                        ? "border-primary bg-primary/15 text-primary shadow-sm shadow-primary/10"
-                        : "border-border/50 text-muted-foreground hover:border-primary/40 hover:bg-primary/5"
-                    }`}
-                  >
-                    {qt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <label className="text-sm font-medium mb-2.5 block text-foreground/80">
-                Number of Questions
-              </label>
-              <div className="flex gap-2 flex-wrap">
-                {questionCounts.map((n) => (
-                  <button
-                    key={n}
-                    onClick={() => {
-                      setNumQuestions(numQuestions === String(n) ? "" : String(n));
-                      setShowCustomInput(false);
-                      setCustomCount("");
-                    }}
-                    className={`px-6 py-2.5 rounded-xl text-sm font-medium border transition-all duration-200 ${
-                      numQuestions === String(n) && !showCustomInput
-                        ? "border-primary bg-primary/15 text-primary shadow-sm shadow-primary/10"
-                        : "border-border/50 text-muted-foreground hover:border-primary/40 hover:bg-primary/5"
-                    }`}
-                  >
-                    {n}
-                  </button>
-                ))}
+          <div>
+            <label className="text-sm font-medium mb-2.5 block text-foreground/80">
+              Quiz Type
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { value: "mixed", label: "Mixed AI Pick" },
+                { value: "mcq", label: "Multiple Choice" },
+                { value: "true-false", label: "True / False" },
+                { value: "fill-blank", label: "Fill in the Blanks" },
+              ].map((qt) => (
                 <button
-                  onClick={() => {
-                    setShowCustomInput(!showCustomInput);
-                    setNumQuestions("");
-                    if (showCustomInput) setCustomCount("");
-                  }}
-                  className={`px-6 py-2.5 rounded-xl text-sm font-medium border transition-all duration-200 ${
-                    showCustomInput
+                  key={qt.value}
+                  onClick={() => setQuizType(qt.value)}
+                  className={`px-5 py-2.5 rounded-xl text-sm font-medium border transition-all duration-200 ${
+                    quizType === qt.value
                       ? "border-primary bg-primary/15 text-primary shadow-sm shadow-primary/10"
                       : "border-border/50 text-muted-foreground hover:border-primary/40 hover:bg-primary/5"
                   }`}
                 >
-                  Other
+                  {qt.label}
                 </button>
-              </div>
-              {showCustomInput && (
-                <div className="mt-3">
-                  <input
-                    type="text"
-                    inputMode="numeric"
-                    placeholder="Enter number (e.g., 7, 13, 20...)"
-                    value={customCount}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, ""); // Only digits
-                      if (val === "" || (parseInt(val) >= 1 && parseInt(val) <= 50)) {
-                        setCustomCount(val);
-                      }
-                    }}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        handleGenerate();
-                      }
-                    }}
-                    className="w-full rounded-xl border border-border/60 bg-background/80 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/60 transition-all"
-                  />
-                  {customCount && (parseInt(customCount) < 1 || parseInt(customCount) > 50) && (
-                    <p className="text-xs text-destructive mt-1 pl-1">Must be between 1 and 50</p>
-                  )}
-                </div>
-              )}
+              ))}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium mb-2.5 block text-foreground/80">
+              Number of Questions
+            </label>
+            <div className="flex gap-2 flex-wrap">
+              {questionCounts.map((n) => (
+                <button
+                  key={n}
+                  onClick={() => {
+                    setNumQuestions(
+                      numQuestions === String(n) ? "" : String(n),
+                    );
+                    setShowCustomInput(false);
+                    setCustomCount("");
+                  }}
+                  className={`px-6 py-2.5 rounded-xl text-sm font-medium border transition-all duration-200 ${
+                    numQuestions === String(n) && !showCustomInput
+                      ? "border-primary bg-primary/15 text-primary shadow-sm shadow-primary/10"
+                      : "border-border/50 text-muted-foreground hover:border-primary/40 hover:bg-primary/5"
+                  }`}
+                >
+                  {n}
+                </button>
+              ))}
+              <button
+                onClick={() => {
+                  setShowCustomInput(!showCustomInput);
+                  setNumQuestions("");
+                  if (showCustomInput) setCustomCount("");
+                }}
+                className={`px-6 py-2.5 rounded-xl text-sm font-medium border transition-all duration-200 ${
+                  showCustomInput
+                    ? "border-primary bg-primary/15 text-primary shadow-sm shadow-primary/10"
+                    : "border-border/50 text-muted-foreground hover:border-primary/40 hover:bg-primary/5"
+                }`}
+              >
+                Other
+              </button>
+            </div>
+            {showCustomInput && (
+              <div className="mt-3">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  placeholder="Enter number (e.g., 7, 13, 20...)"
+                  value={customCount}
+                  onChange={(e) => {
+                    const val = e.target.value.replace(/\D/g, ""); // Only digits
+                    if (
+                      val === "" ||
+                      (parseInt(val) >= 1 && parseInt(val) <= 50)
+                    ) {
+                      setCustomCount(val);
+                    }
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      handleGenerate();
+                    }
+                  }}
+                  className="w-full rounded-xl border border-border/60 bg-background/80 px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary/40 placeholder:text-muted-foreground/60 transition-all"
+                />
+                {customCount &&
+                  (parseInt(customCount) < 1 || parseInt(customCount) > 50) && (
+                    <p className="text-xs text-destructive mt-1 pl-1">
+                      Must be between 1 and 50
+                    </p>
+                  )}
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
 
       {error && (
         <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive flex items-center gap-2">
@@ -725,9 +737,11 @@ function QuizPhase({ quizData, onComplete }) {
       // AI-based semantic evaluation for fill-in-the-blank
       setEvaluating(true);
       try {
-        const correctAnswers = currentQuestion.correctAnswers && currentQuestion.correctAnswers.length > 0
-          ? currentQuestion.correctAnswers
-          : [currentQuestion.correctAnswer];
+        const correctAnswers =
+          currentQuestion.correctAnswers &&
+          currentQuestion.correctAnswers.length > 0
+            ? currentQuestion.correctAnswers
+            : [currentQuestion.correctAnswer];
 
         const res = await fetch("/api/evaluate-answer", {
           method: "POST",
@@ -747,7 +761,10 @@ function QuizPhase({ quizData, onComplete }) {
           evalResult = {
             isCorrect: data.isCorrect,
             correctAnswer: data.correctAnswer || currentQuestion.correctAnswer,
-            explanation: data.explanation || currentQuestion.explanation || "The correct answer is: " + currentQuestion.correctAnswer,
+            explanation:
+              data.explanation ||
+              currentQuestion.explanation ||
+              "The correct answer is: " + currentQuestion.correctAnswer,
           };
         } else {
           throw new Error(data.error || "AI evaluation failed");
@@ -756,16 +773,20 @@ function QuizPhase({ quizData, onComplete }) {
         console.warn("AI evaluation failed, using fallback:", err.message);
         // Fallback: basic string matching
         const normalizedUser = String(userAnswer).trim().toLowerCase();
-        const answersArray = currentQuestion.correctAnswers && currentQuestion.correctAnswers.length > 0
-          ? currentQuestion.correctAnswers
-          : [currentQuestion.correctAnswer];
+        const answersArray =
+          currentQuestion.correctAnswers &&
+          currentQuestion.correctAnswers.length > 0
+            ? currentQuestion.correctAnswers
+            : [currentQuestion.correctAnswer];
         isCorrect = answersArray.some(
-          (ans) => String(ans).trim().toLowerCase() === normalizedUser
+          (ans) => String(ans).trim().toLowerCase() === normalizedUser,
         );
         evalResult = {
           isCorrect,
           correctAnswer: currentQuestion.correctAnswer,
-          explanation: currentQuestion.explanation || "The correct answer is: " + currentQuestion.correctAnswer,
+          explanation:
+            currentQuestion.explanation ||
+            "The correct answer is: " + currentQuestion.correctAnswer,
         };
       } finally {
         setEvaluating(false);
@@ -773,12 +794,16 @@ function QuizPhase({ quizData, onComplete }) {
     } else {
       // MCQ / True-False: local evaluation (unchanged)
       const normalizedUser = String(userAnswer).trim().toLowerCase();
-      const normalizedCorrect = String(currentQuestion.correctAnswer).trim().toLowerCase();
+      const normalizedCorrect = String(currentQuestion.correctAnswer)
+        .trim()
+        .toLowerCase();
       isCorrect = normalizedUser === normalizedCorrect;
       evalResult = {
         isCorrect,
         correctAnswer: currentQuestion.correctAnswer,
-        explanation: currentQuestion.explanation || "The correct answer is: " + currentQuestion.correctAnswer,
+        explanation:
+          currentQuestion.explanation ||
+          "The correct answer is: " + currentQuestion.correctAnswer,
       };
     }
 
@@ -1353,7 +1378,7 @@ function shuffleQuizQuestions(questions) {
 
 // ─── Main Quiz Page ───
 
-export default function QuizPage() {
+function QuizPageContent() {
   const { user } = useUser();
   const searchParams = useSearchParams();
   const [phase, setPhase] = useState("config"); // config | quiz | results
@@ -1377,9 +1402,10 @@ export default function QuizPage() {
             return;
           }
 
-          const questions = data.selectedQuestions?.length > 0
-            ? data.selectedQuestions
-            : data.questions || [];
+          const questions =
+            data.selectedQuestions?.length > 0
+              ? data.selectedQuestions
+              : data.questions || [];
 
           if (retakeMode === "same") {
             if (questions.length === 0) {
@@ -1424,7 +1450,8 @@ export default function QuizPage() {
                   subtopic: genData.subtopic || data.subtopic || "",
                   inputType: genData.inputType || "topic",
                   requestedCount: genData.questions.length,
-                  previousTopicLevel: genData.previousTopicLevel || data.topicLevel || null,
+                  previousTopicLevel:
+                    genData.previousTopicLevel || data.topicLevel || null,
                   isNewTopic: genData.isNewTopic ?? false,
                   selectedDifficulty: genData.selectedDifficulty || null,
                 });
@@ -1479,7 +1506,10 @@ export default function QuizPage() {
         formData.append("numQuestions", String(quizData.requestedCount || 10));
         if (user?.id) formData.append("userId", user.id);
 
-        const res = await fetch("/api/generate-quiz", { method: "POST", body: formData });
+        const res = await fetch("/api/generate-quiz", {
+          method: "POST",
+          body: formData,
+        });
         const data = await res.json();
 
         if (data.error || !data.questions?.length) {
@@ -1494,7 +1524,8 @@ export default function QuizPage() {
           subtopic: data.subtopic || quizData.subtopic || "",
           inputType: data.inputType || "topic",
           requestedCount: data.questions.length,
-          previousTopicLevel: data.previousTopicLevel || quizData.previousTopicLevel || null,
+          previousTopicLevel:
+            data.previousTopicLevel || quizData.previousTopicLevel || null,
           isNewTopic: data.isNewTopic ?? false,
           selectedDifficulty: data.selectedDifficulty || null,
         });
@@ -1537,4 +1568,22 @@ export default function QuizPage() {
   }
 
   return null;
+}
+
+export default function QuizPage() {
+  return (
+    <Suspense
+      fallback={
+        <div
+          className="flex h-64 items-center justify-center"
+          role="status"
+          aria-label="Loading quiz"
+        >
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      }
+    >
+      <QuizPageContent />
+    </Suspense>
+  );
 }
